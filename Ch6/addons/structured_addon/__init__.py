@@ -10,11 +10,15 @@ bl_info = {
 import bpy
 from . import img_loader
 from . import panel
-from importlib import reload
+from . import _refresh_
+
+_refresh_.reload_modules()
+# from importlib import reload
+
 # Adding functionality for the addon to update its file during development
 # Using importlib
-reload(img_loader)
-reload(panel)
+# reload(img_loader)
+# reload(panel)
 
 def register():
     img_loader.register_icons()

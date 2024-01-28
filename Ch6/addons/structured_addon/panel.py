@@ -17,9 +17,9 @@ class OBJECT_PT_structured(bpy.types.Panel):
         icons = img_loader.get_icons_collection()
         row = layout.row(align = True)
         row.label(text = "Scene Objects", icon_value = icons['pack_64'].icon_id)
-        row.layout(text = " ", icon_value = icons['smile_64'].icon_id )
+        row.label(text = " ", icon_value = icons['smile_64'].icon_id )
 
-        grid = row.grid_flow(columns=2, row_major= True)
+        grid = layout.grid_flow(columns=2, row_major= True)
 
         for i, obj in enumerate(context.scene.objects):
             if i > self.max_objects:
