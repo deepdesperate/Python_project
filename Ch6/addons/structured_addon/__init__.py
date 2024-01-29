@@ -11,6 +11,7 @@ import bpy
 from . import img_loader
 from . import panel
 from . import _refresh_
+from . import preferences
 
 _refresh_.reload_modules()
 # from importlib import reload
@@ -22,9 +23,11 @@ _refresh_.reload_modules()
 
 def register():
     img_loader.register_icons()
+    preferences.register_classes()
     panel.register_classes()
 
 def unregister():
     panel.unregister_classes()
+    preferences.unregister_classes()
     img_loader.unregister_icons()
     

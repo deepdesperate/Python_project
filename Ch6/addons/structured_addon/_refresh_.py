@@ -11,4 +11,5 @@ def reload_modules():
         return
     reload(sys.modules[__name__])
     reload(img_loader)
+    reload(preferences)
     reload(panel)

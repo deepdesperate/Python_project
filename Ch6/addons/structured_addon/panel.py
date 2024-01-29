@@ -10,7 +10,7 @@ class OBJECT_PT_structured(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_context = 'object'
 
-    max_objects = 3 # limit displayed list to 3 objects
+    # max_objects = 3 limit displayed list to 3 objects
 
     def draw(self, context):
         layout = self.layout
@@ -21,8 +21,10 @@ class OBJECT_PT_structured(bpy.types.Panel):
 
         grid = layout.grid_flow(columns=2, row_major= True)
 
+        add_on = context.preferences.addons[__package__]
+        preferences = add_on.preferences
         for i, obj in enumerate(context.scene.objects):
-            if i > self.max_objects:
+            if i >= preferences.max_objects:
                 grid.label(text = "...")
                 break
             grid.label(text = obj.name, icon = f'OUTLINER_OB_{obj.type}')
