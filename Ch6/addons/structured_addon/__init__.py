@@ -12,6 +12,7 @@ from . import img_loader
 from . import panel
 from . import _refresh_
 from . import preferences
+from . import operators
 
 _refresh_.reload_modules()
 # from importlib import reload
@@ -23,11 +24,13 @@ _refresh_.reload_modules()
 
 def register():
     img_loader.register_icons()
+    operators.register_classes()
     preferences.register_classes()
     panel.register_classes()
 
 def unregister():
     panel.unregister_classes()
+    operators.unregister_classes()
     preferences.unregister_classes()
     img_loader.unregister_icons()
     

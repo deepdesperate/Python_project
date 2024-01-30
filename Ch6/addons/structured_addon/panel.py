@@ -1,6 +1,6 @@
 import bpy
 from .import img_loader
-
+from . import operators
 
 class OBJECT_PT_structured(bpy.types.Panel):
     """ Creates a Panel in the object context"""
@@ -29,6 +29,7 @@ class OBJECT_PT_structured(bpy.types.Panel):
                 break
             grid.label(text = obj.name, icon = f'OUTLINER_OB_{obj.type}')
 
+        layout.operator(operators.TRANSFORM_OT_random_location.bl_idname)
 
 
 def register_classes():
