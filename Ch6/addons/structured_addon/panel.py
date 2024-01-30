@@ -23,13 +23,29 @@ class OBJECT_PT_structured(bpy.types.Panel):
 
         add_on = context.preferences.addons[__package__]
         preferences = add_on.preferences
+
         for i, obj in enumerate(context.scene.objects):
             if i >= preferences.max_objects:
                 grid.label(text = "...")
                 break
+            grid.enabled = obj.select_get()
+            grid.alert = obj == context.object
             grid.label(text = obj.name, icon = f'OUTLINER_OB_{obj.type}')
-
+        
         layout.operator(operators.TRANSFORM_OT_random_location.bl_idname)
+        num_selected = len(context.selected_objects)
+        if num_selected > 0:
+            txt = f"Delete {num_selected} object"
+            if num_selected > 1:
+                txt += "s"
+            props = layout.operator(bpy.ops.object.delete.idname(), text = txt)
+            props.confirm = False
+        else:
+            to_disable = layout
+            to_disable.enabled = True
+            layout.operator(bpy.ops.object.delete.idname, text = "Delete Selected")
+
+        
 
 
 def register_classes():
