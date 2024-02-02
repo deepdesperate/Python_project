@@ -49,3 +49,12 @@ def view_menu_items(self, context):
 
     props = self.layout.operator( ActionToSceneRange.bl_idname)
     props.use_preview = False
+
+
+def register():
+    bpy.utils.register_class(ActionToSceneRange)
+    bpy.types.TIME_MT_view.append(view_menu_items)
+
+def unregister():
+    bpy.types.TIME_MT_view.remove(view_menu_items)
+    bpy.utils.unregister_class(ActionToSceneRange)
