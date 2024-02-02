@@ -40,7 +40,22 @@ class ActionToSceneRange(bpy.types.Operator):
         else:
             scn.frame_start = int(first)
             scn.frame_end = int(last)
-        bpy.ops.action.view_all()
+        
+        
+        # Checking for each windows' scene whether there is a DOPSHEET EDITOR
+        for window in context.window_manager.windows:
+            screen = window.screen
+            for area in screen.areas:
+                if area.type != 'DOPESHEET_EDITOR':
+                    continue
+                for region in area.regions:
+                    if region.type == 'WINDOW':
+                        with context.temp_override ( window = window, area= area, region = region):
+                            bpy.ops.action.view_all
+                        break
+                break
+
+
         return {'FINISHED'}
     
 def view_menu_items(self, context):
