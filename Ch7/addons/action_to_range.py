@@ -55,7 +55,6 @@ class ActionToSceneRange(bpy.types.Operator):
                         break
                 break
 
-
         return {'FINISHED'}
     
 def view_menu_items(self, context):
