@@ -15,5 +15,5 @@ for fc in f_curve:
     print(fc.data_path, fc.array_index)
     
     for f in fc.keyframe_points:
-        frame,value = f.cpo
+        frame,value = f.co
         print("\t Frame", frame, "value", value)
