@@ -9,6 +9,9 @@ bl_info = {
 }
 
 import bpy
+from math import pi
+# Arcsine function
+from math import asin
 
 class VertRunner(bpy.types.Operator):
     """Run over vertices of the active object"""
@@ -18,6 +21,7 @@ class VertRunner(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     step: bpy.props.IntProperty(default = 12)
+    loop: bpy.props.BoolProperty(default = True)
 
     @classmethod
     def poll(cls, context):
@@ -33,6 +37,9 @@ class VertRunner(bpy.types.Operator):
     def execute(self, context):
         verts = list(context.object.data.vertices)
 
+        if self.loop:
+            verts.append(vert[0])
+
         for obj in context.selected_objects:
             if not obj == context.object:
                 frame = context.scene.frame_current
@@ -41,6 +48,20 @@ class VertRunner(bpy.types.Operator):
                     obj.keyframe_insert('location', frame = frame)
                     frame += self.step
         return {'FINISHED'}
+
+def aim_to_point(self, ob, point_co):
+    """Orient objects to look at coordinate"""
+
+    direction = point_co - ob.location
+    # Normalising the direction so that result is not affected by distance
+    direction.normalize()
+    arc = asin(direction.y)
+    # Making sure when coordinate is of -x axis, we calcuate, by pi-arc, as in 180 - arc
+    if direction.x < 0:
+        arc = pi-arc
+
+    # Adding 90 cuz in blender object faces opposite Y-axis
+    arc += pi/2
 
 def anim_menu_funct(self, context):
     self.layout.separator()
