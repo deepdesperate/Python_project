@@ -38,30 +38,45 @@ class VertRunner(bpy.types.Operator):
         verts = list(context.object.data.vertices)
 
         if self.loop:
-            verts.append(vert[0])
+            verts.append(verts[0])
 
         for obj in context.selected_objects:
             if not obj == context.object:
+                obj.location = context.object.data.vertices[-1].co
                 frame = context.scene.frame_current
+
                 for vert in verts:
+                    self.aim_to_point(obj, vert.co)
+                    obj.keyframe_insert('rotation_euler', frame = frame, index = 2)
                     obj.location = vert.co
                     obj.keyframe_insert('location', frame = frame)
                     frame += self.step
+
         return {'FINISHED'}
 
-def aim_to_point(self, ob, point_co):
-    """Orient objects to look at coordinate"""
+    def aim_to_point(self, ob, point_co):
+        """Orient objects to look at coordinate"""
 
-    direction = point_co - ob.location
-    # Normalising the direction so that result is not affected by distance
-    direction.normalize()
-    arc = asin(direction.y)
-    # Making sure when coordinate is of -x axis, we calcuate, by pi-arc, as in 180 - arc
-    if direction.x < 0:
-        arc = pi-arc
+        direction = point_co - ob.location
 
-    # Adding 90 cuz in blender object faces opposite Y-axis
-    arc += pi/2
+        # Normalising the direction so that result is not affected by distance
+        direction.normalize()
+        arc = asin(direction.y)
+
+        # Making sure when coordinate is of -x axis, we calcuate, by pi-arc, as in 180 - arc
+        if direction.x < 0:
+            arc = pi-arc
+
+        # Adding 90 cuz in blender object faces opposite Y-axis
+        arc += pi/2
+
+        # Calculating the minimum angle
+        arcs = (arc, arc + 2*pi, arc - 2*pi)
+        diffs = [abs(ob.rotation_euler.z - a) for a in arcs]
+        shortest = min(diffs)
+
+        res = next(a for i, a in enumerate(arcs) if diffs[i] == shortest)
+        ob.rotation_euler.z = res
 
 def anim_menu_funct(self, context):
     self.layout.separator()
