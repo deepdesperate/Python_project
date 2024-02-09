@@ -24,6 +24,25 @@ class OBJECT_SHAKER(bpy.types.Operator):
     def poll(cls, context):
         return context.object
     
+    def get_fcurve(self, context, data_path, index):
+        """Return F-Curve of given data_path/ index"""
+
+        action = context.object.animation_data.action
+
+        # Halt the script, if for unforeseen reasons, no current action is found
+        assert action
+        try: 
+            crv = action.fcurves.new(data_path, index = index)
+        except RuntimeError:
+            # next can be applied to iterators as wella as arrays or collection
+            crv = next(fc for fc in action.fcurves if fc.data_path == data_path and fc.array_index == index)
+            
+        # Making sure our fcurve has keyframes
+        if not crv.keyframe_points:
+            crv.keyframe_points.insert( frame = context.scene.frame_current, value = getattr(context.object, data_path)[index])
+
+        return crv
+    
     def execute(self, context):
         if not context.object.animation_data:
             anim = context.object.animation_data_create()
@@ -45,23 +64,31 @@ class OBJECT_SHAKER(bpy.types.Operator):
         end = current + duration_frames
 
         #Getting fcurves for locationZ, rotation_euler X and rotation_euler Y
-        z_loc_crv = self.get_fcurve( context,'location', index = 2)
+        z_loc_crv = self.get_fcurve(context,'location', index = 2)
         x_rot_crv = self.get_fcurve(context, 'rotation_euler', index = 0)
         y_rot_crv = self.get_fcurve(context, 'rotation_euler' , index = 1)
 
-def get_fcurve(self, obj, data_path, index):
-    """Return F-Curve of given data_path/ index"""
-    action = obj.animation_data.action
-    # Halt the script, if for unforeseen reasons, no current action is found
-    assert action
-    try: 
-        crv = action.fcurves.new(data_path, index = index)
-    except RuntimeError:
-        # next can be applied to iterators as wella as arrays or collection
-        crv = next(fc for fc in action.fcurves if fc.data_path == data_path and fc.array_index == index)
-        
-    # Making sure our fcurve has keyframes
-    if not crv.keyframe_points:
-        crv.keyframe_points.insert( frame = context.scene.frame_current, value = getattr(obj,data_path)[index])
+        for crv in z_loc_crv, y_rot_crv, x_rot_crv:
+            noise = crv.modifiers.new('NOISE')
+            noise.strength = self.strength
+            noise.use_restricted_range = True
+            noise.frame_start = start
+            noise.frame_end = end
+        return {'FINISHED'}
+    
 
-    return crv
+    
+
+def m_items(self, context):
+    self.layout.separator()
+    self.layout.operator(OBJECT_SHAKER.bl_idname)
+
+
+
+def register():
+    bpy.utils.register_class(OBJECT_SHAKER)
+    bpy.types.VIEW3D_MT_object_context_menu.append(m_items)
+
+def unregsiter():
+    bpy.types.VIEW3D_MT_object_context_menu.remove(m_items)
+    bpy.utils.unregister_class(OBJECT_SHAKER)
