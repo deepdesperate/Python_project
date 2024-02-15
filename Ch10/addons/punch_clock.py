@@ -45,6 +45,10 @@ class PunchClock(bpy.types.Operator):
 
 def menu_func(self, context):
     self.layout.separator()
+    # setting invoke default when called from pop up, Shift+A
+    row = self.layout.row()
+    row.operator_context = "INVOKE_DEFAULT"
+    
     self.layout.operator(PunchClock.bl_idname, icon = 'TIME')
 
 def register():
