@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Text PunchClock",
     "author": "Naman Deep",
-    "version": (1, 0),
+    "version": (1, 0, 1),
     "blender": (3, 00, 0),
     "description": "Create an Hour/Minutes text object",
     "category": "Learning",
@@ -19,6 +19,7 @@ class PunchClock(bpy.types.Operator):
 
     hour: bpy.props.IntProperty(default = 0, min = 0, max = 23)
     mins: bpy.props.IntProperty(default = 0, min = 0, max = 59)
+    set_hours: bpy.props.BoolProperty(default = True)
 
     @classmethod
     def poll(cls, context):
@@ -28,7 +29,42 @@ class PunchClock(bpy.types.Operator):
         now = datetime.datetime.now()
         self.hour = now.hour
         self.mins = now.minute
-        return self.execute(context)
+
+        self.txt_crv = bpy.data.curves.new(type = "FONT", name = "TXT-hhmm")
+        self.txt_obj = bpy.data.objects.new(name = "OB-Txt", object_data=self.txt_crv)
+        context.collection.objects.link(self.txt_obj)
+        return {'RUNNING_MODAL'}
+
+    def modal(self, context, event):
+        # Getting the mouse move direction
+        if event.type == 'MOUSEMOVE':
+            delta = event.mouse_x - event.mouse_prev_x
+            delta /= 10
+
+            delta = round(delta)
+
+            if self.set_hours:
+                self.hour += delta
+            else:
+                self.mins += delta
+            txt = f"{self.hour:02}:{self.mins: 02}"
+            self.txt_crv.body = txt
+        
+        # https://docs.blender.org/api/3.3/bpy_types_enum_items/event_type_items.html
+        # using tab and checking even.value
+        if event.type == 'TAB' and event.value == 'PRESS':
+            self.set_hours = not self.set_hours
+        
+        elif event.type == 'RET':
+            return {'FINISHED'}
+        elif event.type == 'ESC':
+            # Cleaning up after itself
+            bpy.data.objects.remove(self.txt_obj)
+            # Cancelled helps avoid the undo queu
+            return {'CANCELLED'}
+        
+        return {'RUNNING_MODAL'}
+
     
     def execute(self, context):
 
@@ -48,7 +84,7 @@ def menu_func(self, context):
     # setting invoke default when called from pop up, Shift+A
     row = self.layout.row()
     row.operator_context = "INVOKE_DEFAULT"
-    
+
     self.layout.operator(PunchClock.bl_idname, icon = 'TIME')
 
 def register():
