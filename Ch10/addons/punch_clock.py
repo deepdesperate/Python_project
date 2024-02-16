@@ -33,8 +33,11 @@ class PunchClock(bpy.types.Operator):
         self.txt_crv = bpy.data.curves.new(type = "FONT", name = "TXT-hhmm")
         self.txt_obj = bpy.data.objects.new(name = "OB-Txt", object_data=self.txt_crv)
         context.collection.objects.link(self.txt_obj)
-        return {'RUNNING_MODAL'}
 
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+        
+    @staticmethod
     def modal(self, context, event):
         # Getting the mouse move direction
         if event.type == 'MOUSEMOVE':
@@ -50,13 +53,14 @@ class PunchClock(bpy.types.Operator):
             txt = f"{self.hour:02}:{self.mins: 02}"
             self.txt_crv.body = txt
         
+        elif event.type == 'RET':
+            return {'FINISHED'}
+        
         # https://docs.blender.org/api/3.3/bpy_types_enum_items/event_type_items.html
         # using tab and checking even.value
         if event.type == 'TAB' and event.value == 'PRESS':
             self.set_hours = not self.set_hours
-        
-        elif event.type == 'RET':
-            return {'FINISHED'}
+            
         elif event.type == 'ESC':
             # Cleaning up after itself
             bpy.data.objects.remove(self.txt_obj)
