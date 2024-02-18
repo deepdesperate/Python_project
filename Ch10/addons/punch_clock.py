@@ -25,6 +25,15 @@ class PunchClock(bpy.types.Operator):
     def poll(cls, context):
         return context.mode == 'OBJECT'
     
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row(align=True)
+        row.alignment = 'CENTER'
+
+        row.prop(self, 'hour', text = "")
+        row.label(text = ' :',)
+        row.prop(self, 'mins',text = "")
+
     def invoke(self, context, event):
         now = datetime.datetime.now()
         self.hour = now.hour
