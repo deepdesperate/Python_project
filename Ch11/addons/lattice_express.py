@@ -7,10 +7,8 @@ bl_info = {
     "category": "Learning",
 }
 
-from typing import Set
 import bpy
 from mathutils import Vector
-from bpy.types import Context
 
 
 class LatteExpress(bpy.types.Operator):
@@ -22,7 +20,7 @@ class LatteExpress(bpy.types.Operator):
     def poll(cls, context):
         return context.active_object
     
-    def execute(self, context: Context):
+    def execute(self, context):
         ob = context.object
         latt_data = bpy.data.lattices.new(f"LAT-{ob.name}")
         latt_obj = bpy.data.objects.new( name = latt_data.name , object_data=latt_data)
@@ -42,3 +40,20 @@ class LatteExpress(bpy.types.Operator):
 
         ob_translation += ob_center
         latt_obj.location = ob_translation
+
+        mod = ob.modifiers.new("Lattice", 'LATTICE')
+        mod.object = latt_obj
+        return {'FINISHED'}
+
+def menu_func(self, context):
+    self.layout.operator(LatteExpress.bl_idname , icon = "MOD_LATTICE")
+
+def register():
+    bpy.utils.register_class(LatteExpress)
+    ob_menu = bpy.types.VIEW3D_MT_object_context_menu
+    ob_menu.append(menu_func)
+
+def unregister():
+    ob_menu = bpy.types.VIEW3D_MT_object_context_menu
+    ob_menu.remove(menu_func)
+    bpy.utils.unregister_class(LatteExpress)
