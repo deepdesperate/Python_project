@@ -15,6 +15,13 @@ class LatteExpress(bpy.types.Operator):
     """Set up Lattice Deformation"""
     bl_idname = "object.latte_expresso"
     bl_label = "Create Lattice on active object"
+    bl_options = {'REGISTER','UNDO'}
+
+    add_subsurf: bpy.props.BoolProperty(default = True)
+    subd_levels: bpy.props.IntProperty(default = 2)
+
+    grid_levels: bpy.props.IntVectorProperty(default = (3, 3, 3) , min = 1, subtype = 'XYZ')
+
 
     @classmethod
     def poll(cls, context):
@@ -22,9 +29,19 @@ class LatteExpress(bpy.types.Operator):
     
     def execute(self, context):
         ob = context.object
+        if self.add_subsurf:
+            subdiv = ob.modifiers.new("Subdivision", "SUBSURF")
+            subdiv.levels = self.subd_levels
+            subdiv.render_levels = self.subd_levels
+            subdiv.subdivision_type = "SIMPLE"
+
         latt_data = bpy.data.lattices.new(f"LAT-{ob.name}")
         latt_obj = bpy.data.objects.new( name = latt_data.name , object_data=latt_data)
-        
+        latt_data.points_u = self.grid_levels[0]
+        latt_data.points_v = self.grid_levels[1]
+        latt_data.points_w = self.grid_levels[2]
+        latt_data.use_outside = True
+
         context.collection.objects.link(latt_obj)
 
         latt_obj.scale = ob.dimensions
