@@ -21,7 +21,7 @@ class LatteExpress(bpy.types.Operator):
     subd_levels: bpy.props.IntProperty(default = 2)
 
     grid_levels: bpy.props.IntVectorProperty(default = (3, 3, 3) , min = 1, subtype = 'XYZ')
-
+    add_armature: bpy.props.BoolProperty(default = True)
 
     @classmethod
     def poll(cls, context):
@@ -56,7 +56,26 @@ class LatteExpress(bpy.types.Operator):
         ob_center = btm_left.lerp(top_right, 0.5)
 
         ob_translation += ob_center
-        latt_obj.location = ob_translation
+        if not self.add_armature:
+            latt_obj.location = ob_translation
+        else:
+            arm_data = bpy.data.armatures.new(f"ARM-{ob.name}")
+            arm_obj = bpy.data.objects.new( name = arm_data.name, object_data= arm_data)
+            context.collection.objects.link(arm_obj)
+
+        # latt_obj.location = ob_translation
+        latt_obj.parent = arm_obj
+        arm_obj.location = ob_translation
+
+        # to make armature's transform pivot under the affected geometry
+        half_height = ob.dimension[2]/2
+        arm_obj.location[2] -= half_height
+
+        # Lattice should be centerd to geometry
+        latt_obj.location[2] += half_height
+
+        context.view_layer.objects.active = arm_obj
+        bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
 
         mod = ob.modifiers.new("Lattice", 'LATTICE')
         mod.object = latt_obj
