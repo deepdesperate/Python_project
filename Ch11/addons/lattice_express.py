@@ -68,7 +68,7 @@ class LatteExpress(bpy.types.Operator):
         arm_obj.location = ob_translation
 
         # to make armature's transform pivot under the affected geometry
-        half_height = ob.dimension[2]/2
+        half_height = ob.dimensions[2]/2
         arm_obj.location[2] -= half_height
 
         # Lattice should be centerd to geometry
@@ -77,8 +77,65 @@ class LatteExpress(bpy.types.Operator):
         context.view_layer.objects.active = arm_obj
         bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
 
+        grid_levels = self.grid_levels[2]
+        height = ob.dimensions[2]
+        bone_length = height / (grid_levels - 1)
+
+        for i in range(grid_levels):
+            eb = arm_data.edit_bones.new(f"LAT_{i:02}")
+            eb.head = ( 0 , 0 , i * bone_length)
+            eb.tail = ( 0 , 0 , eb.head[2] + bone_length)
+
+            rel_height = i / (grid_levels- 1)
+            rel_height -= 0.5
+            vert_ids = []
+
+            for id, v in enumerate(latt_data.points):
+                if v.co[2] == rel_height:
+                    vert_ids.append(id)
+            
+            vg = latt_obj.vertex_groups.new(name=eb.name)
+            vg.add(vert_ids, 1.0, 'REPLACE')
+        
+        arm_mod = latt_obj.modifiers.new("Armature", "ARMATURE")
+        arm_mod.object = arm_obj
+
+        bpy.ops.object.mode_set(mode = 'POSE', toggle = False)
+
+        v_cos = [
+            [-0.5, 0.0, -0.5],
+            [-0.5, 0.0, 0.5],
+            [0.5, 0.0, 0.5],
+            [0.5, 0.0, -0.5]
+        ]
+
+        edges = [
+            [0,1], [1,2], [2,3], [3,0]
+        ]
+
+        mesh = bpy.data.meshes.new("WDG-square")
+        # third argument is empty list, no faces
+        mesh.from_pydata(v_cos, edges, [])
+
+        wdg_obj = bpy.data.objects.new(mesh.name, mesh)
+        context.collection.objects.link(wdg_obj)
+
+        for pb in arm_obj.pose.bones:
+            pb.custom_shape = wdg_obj
+            pb_scale = pb.custom_shape_scale_xyz
+
+            pb_scale[0] = ob.dimensions[0]
+            pb_scale[2] = ob.dimensions[1]
+
+            pb_scale[0] /= bone_length
+            pb_scale[2] /= bone_length
+        
+        wdg_obj.hide_set(True)
+        latt_obj.hide_set(True)
+
         mod = ob.modifiers.new("Lattice", 'LATTICE')
         mod.object = latt_obj
+        ob.select_set(False)
         return {'FINISHED'}
 
 def menu_func(self, context):
