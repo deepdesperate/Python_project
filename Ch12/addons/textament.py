@@ -20,9 +20,12 @@ class AddTextures(bpy.types.Operator, ImportHelper):
     bl_label = "Load and connect textures"
     bl_description = "Load and connect material textures"
 
+    # Nodes spacing
+    _spacing = 340.0
+
     directory: bpy.props.StringProperty()
     files: bpy.props.CollectionProperty( 
-                    name = "File Paht",
+                    name = "File Path",
                     type = bpy.types.OperatorFileListElement,
                 )
     
@@ -55,26 +58,48 @@ class AddTextures(bpy.types.Operator, ImportHelper):
                 if match_rule(inp) in match_rule(f.name):
                     matching_names[inp] = f.name
                     break
+        # TO get the input nodes of the PS, in order
+        sorted_inputs = [i for i in input_names if i in matching_names]
         
-        for inp, fname in matching_names:
-            img_path = os.path.join(self.directory, fname)
+        for i ,inp in enumerate(sorted_inputs):
+            img_path = os.path.join(self.directory, matching_names[inp] )
+
             img = bpy.data.images.load( img_path, check_existing= True)
             
             if target_node.inputs[inp].type != "RGBA":
                 img.colorspace_settings.name = "Non-Color"
 
             tree = mat.node_tree
-            tex_img = tree.nodes.new("ShaderNodeTexImag")
-            tex_img.image = img
+            img_node = tree.nodes.new("ShaderNodeTexImage")
+            img_node.image = img
+
+            img_node.location = target_node.location
+            img_node.location.x -= self._spacing
+            img_node.location.y -= i * self._spacing
+
+            if inp  == "Base Color":
+                mix = mat.node_tree.nodes.new("ShaderNodeMixRGB")
+                mix.location = img_node.location
+                img_node.location.x -= self._spacing / 2
+                mix.location.x += self._spacing / 2
+
+                mat.node_tree.links.new(img_node.outputs["Color"], mix.inputs["Color1"])
+
+                img_node = mix
 
             if inp != "Normal":
-                tree.links.new(tex_img.outputs["Color"] , target_node.inputs[inp] )
+                tree.links.new(img_node.outputs["Color"] , target_node.inputs[inp] )
                 continue
 
             normal_map = tree.nodes.new("ShaderNodeNormalMap")
+            normal_map.location = img_node.location
+            
+            img_node.location.x -= self._spacing / 2
+            normal_map.location.y += self._spacing / 2
+
             tree.links.new( normal_map.outputs["Normal"], target_node.inputs[inp] )
 
-            tree.links.new( tex_img.outputs["Color"], normal_map.inputs["Color"] )
+            tree.links.new( img_node.outputs["Color"], normal_map.inputs["Color"] )
         
         return {'FINISHED'}
 
