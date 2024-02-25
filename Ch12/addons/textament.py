@@ -8,6 +8,7 @@ bl_info = {
     "category": "Learning"
 }
 
+# Finishing the book
 import os
 from typing import Set
 import bpy
